@@ -83,7 +83,7 @@ export default function Home() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="e.g., contract interpretation under force majeure clauses..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder-gray-500"
                   rows={4}
                 />
               </div>
@@ -96,15 +96,15 @@ export default function Home() {
                   id="jurisdiction"
                   value={jurisdiction}
                   onChange={(e) => setJurisdiction(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                 >
-                  <option value="">All Jurisdictions</option>
-                  <option value="supreme-court">US Supreme Court</option>
-                  <option value="federal-circuit">Federal Circuit Courts</option>
-                  <option value="ca">California</option>
-                  <option value="ny">New York</option>
-                  <option value="tx">Texas</option>
-                  <option value="fl">Florida</option>
+                  <option value="" className="text-gray-900">All Jurisdictions</option>
+                  <option value="supreme-court" className="text-gray-900">US Supreme Court</option>
+                  <option value="federal-circuit" className="text-gray-900">Federal Circuit Courts</option>
+                  <option value="ca" className="text-gray-900">California</option>
+                  <option value="ny" className="text-gray-900">New York</option>
+                  <option value="tx" className="text-gray-900">Texas</option>
+                  <option value="fl" className="text-gray-900">Florida</option>
                 </select>
               </div>
               
