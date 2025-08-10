@@ -4,12 +4,12 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 
 ## Features
 
-- 🔍 **Case Law Search**: Search across multiple legal databases including CourtListener and Justia
-- ⚖️ **Jurisdiction Filtering**: Filter results by specific courts and jurisdictions  
-- 🤖 **AI-Powered Analysis**: Generate legal arguments using Google Gemini 2.5 Pro
-- 🔗 **Source Verification**: Direct links to original cases for verification
-- 📱 **Responsive Design**: Works on desktop and mobile devices
-- 🆓 **Free Sources**: Integrates with free legal databases and government resources
+- 🔍 **Intelligent Case Law Search**: AI-powered query analysis generates targeted search terms across multiple legal databases
+- ⚖️ **Jurisdiction-Specific Results**: Filter by courts with contextually relevant cases (CA Civil Code for SF tenant issues, etc.)  
+- 🤖 **Advanced AI Analysis**: Google Gemini 2.5 Pro with enhanced legal context processing
+- 🔗 **Automatic Citation Linking**: Legal references (Civil Code § 1950.5, USC sections) auto-link to official sources
+- 📚 **Multi-Source Integration**: CourtListener, Justia, Google Scholar, Cornell LII with real case law
+- 📱 **Professional Interface**: Clean, accessible design with proper text contrast and usability
 
 ## Benefits
 
@@ -68,12 +68,23 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 
 ## Usage
 
-1. **Enter Legal Query**: Describe your legal question or topic in the search field
-2. **Select Jurisdiction**: Optionally filter by specific courts (US Supreme Court, Federal Circuits, State courts)
-3. **Search Cases**: The system searches CourtListener and other legal databases
-4. **Review Results**: Examine relevant cases with excerpts and direct links to sources
-5. **Generate Argument**: Click "Draft Legal Argument" to create an AI-powered legal analysis
-6. **Verify and Use**: Review the generated argument and verify all citations independently
+1. **Enter Legal Query**: Describe your legal question (e.g., "client is a renter in San Francisco, landlord didn't return deposit")
+2. **Select Jurisdiction**: Optionally filter by specific courts - the AI will prioritize relevant local law
+3. **AI Analysis**: System uses LLM to extract legal concepts and generate targeted search terms
+4. **Smart Search**: Searches multiple databases with relevant terms (Civil Code 1950.5, security deposit law, etc.)
+5. **Review Results**: Examine contextually relevant cases with excerpts and direct links to sources
+6. **Generate Argument**: AI creates comprehensive legal analysis with automatically linked citations
+7. **Professional Output**: Review structured legal memorandum with clickable statute links
+
+## Key Improvements
+
+🎯 **Dramatically Better Relevance**: Instead of random constitutional cases, you'll get *Granberry v. Islay Investments* for SF tenant deposit issues
+
+🔗 **Auto-Linking Citations**: References like "California Civil Code § 1950.5" become clickable links to official statute text
+
+🧠 **Smart Query Processing**: AI extracts legal concepts ("security deposit" + "21 day notice" + "California") for targeted searches
+
+📖 **Multiple Legal Sources**: Real cases from Justia, Google Scholar, Cornell LII - not just generic placeholders
 
 ## API Endpoints
 

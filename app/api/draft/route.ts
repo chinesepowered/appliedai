@@ -110,7 +110,7 @@ V. CONCLUSION
 Ensure all case citations include complete court information, dates, and jurisdictions. Reference specific page numbers, holdings, and legal principles where available.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash',
       contents: prompt,
     });
     

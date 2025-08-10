@@ -10,6 +10,69 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [isDrafting, setIsDrafting] = useState(false);
 
+  // Function to escape HTML entities to prevent XSS
+  const escapeHtml = (text: string) => {
+    if (typeof window === 'undefined') {
+      // Server-side fallback - basic HTML escaping
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  };
+
+  // Function to detect and link legal citations
+  const linkLegalCitations = (text: string) => {
+    // First escape HTML to prevent XSS
+    let safeText = escapeHtml(text);
+    
+    // Patterns for common legal citations
+    const patterns = [
+      // California Civil Code sections
+      {
+        regex: /California Civil Code (?:Section |§ |section )?(\d+(?:\.\d+)*)/gi,
+        linkTemplate: (match: string, section: string) => 
+          `<a href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=${section}&lawCode=CIV" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`
+      },
+      // Generic Civil Code references  
+      {
+        regex: /Civil Code (?:Section |§ |section )?(\d+(?:\.\d+)*)/gi,
+        linkTemplate: (match: string, section: string) => 
+          `<a href="https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?sectionNum=${section}&lawCode=CIV" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`
+      },
+      // USC sections
+      {
+        regex: /(\d+) U\.?S\.?C\.? (?:§ |section )?(\d+(?:\([a-z]\))?)/gi,
+        linkTemplate: (match: string, title: string, section: string) => 
+          `<a href="https://www.law.cornell.edu/uscode/text/${title}/${section}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`
+      },
+      // Federal Rules of Civil Procedure
+      {
+        regex: /(?:Fed\.?|Federal) (?:R\.?|Rule) (?:Civ\.?|Civil) (?:P\.?|Proc\.?) (\d+(?:\([a-z]\d*\))?)/gi,
+        linkTemplate: (match: string, rule: string) => 
+          `<a href="https://www.law.cornell.edu/rules/frcp/rule_${rule}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`
+      },
+      // New York statutes
+      {
+        regex: /New York (?:Real Property Law|RPL) (?:§ |section )?(\d+(?:-[a-z])?)/gi,
+        linkTemplate: (match: string, section: string) => 
+          `<a href="https://www.nysenate.gov/legislation/laws/RPP/${section}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">${match}</a>`
+      },
+    ];
+
+    let linkedText = safeText;
+    patterns.forEach(pattern => {
+      linkedText = linkedText.replace(pattern.regex, pattern.linkTemplate);
+    });
+
+    return linkedText;
+  };
+
   const handleSearch = async () => {
     if (!query.trim()) return;
     
@@ -193,9 +256,10 @@ export default function Home() {
                 
                 <div className="prose max-w-none">
                   <div className="bg-gray-50 p-4 rounded-md">
-                    <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
-                      {argument}
-                    </pre>
+                    <div 
+                      className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-900"
+                      dangerouslySetInnerHTML={{ __html: linkLegalCitations(argument) }}
+                    />
                   </div>
                 </div>
                 
