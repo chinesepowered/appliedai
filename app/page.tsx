@@ -26,10 +26,19 @@ export default function Home() {
     return div.innerHTML;
   };
 
-  // Function to detect and link legal citations
+  // Function to detect and link legal citations while preserving existing HTML formatting
   const linkLegalCitations = (text: string) => {
-    // First escape HTML to prevent XSS
-    let safeText = escapeHtml(text);
+    // Check if text already contains HTML formatting (from backend)
+    const containsHtml = /<\/?(strong|em|br|h1|h2|h3|li|ol|ul)>/i.test(text);
+    
+    let processedText;
+    if (containsHtml) {
+      // Text already contains HTML formatting from backend - preserve it
+      processedText = text;
+    } else {
+      // Text is plain text - escape it for safety
+      processedText = escapeHtml(text);
+    }
     
     // Patterns for common legal citations
     const patterns = [
@@ -65,7 +74,7 @@ export default function Home() {
       },
     ];
 
-    let linkedText = safeText;
+    let linkedText = processedText;
     patterns.forEach(pattern => {
       linkedText = linkedText.replace(pattern.regex, pattern.linkTemplate);
     });
@@ -257,7 +266,7 @@ export default function Home() {
                 <div className="prose max-w-none">
                   <div className="bg-gray-50 p-4 rounded-md">
                     <div 
-                      className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-gray-900"
+                      className="font-sans text-sm leading-relaxed text-gray-900"
                       dangerouslySetInnerHTML={{ __html: linkLegalCitations(argument) }}
                     />
                   </div>
