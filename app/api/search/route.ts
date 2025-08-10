@@ -73,7 +73,7 @@ Format as JSON array of search terms, ordered by relevance:
 Example for tenant deposit issue:
 ["California Civil Code 1950.5", "security deposit 21 days notice", "landlord failure return deposit California", "wrongful retention security deposit damages", "tenant rights California"]
 
-Return only the JSON array, no explanatory text.`;
+CRITICAL: Return ONLY the JSON array. No markdown, no explanatory text, no code blocks. Just the raw JSON array starting with [ and ending with ].`;
 
     const result = await genAI.models.generateContent({
       model: 'gemini-2.5-flash-lite',
@@ -87,14 +87,39 @@ Return only the JSON array, no explanatory text.`;
                           (result as any).candidates?.[0]?.content?.parts?.[0]?.text;
       
       if (responseText) {
+        console.log('Raw LLM response:', responseText);
+        
         try {
-          const parsed = JSON.parse(responseText.trim());
+          // Clean the response - remove markdown code blocks and extra text
+          let cleanedResponse = responseText.trim();
+          
+          // Remove markdown code blocks
+          cleanedResponse = cleanedResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          
+          // Find JSON array pattern
+          const jsonMatch = cleanedResponse.match(/\[[\s\S]*?\]/);
+          if (jsonMatch) {
+            cleanedResponse = jsonMatch[0];
+          }
+          
+          console.log('Cleaned response:', cleanedResponse);
+          
+          const parsed = JSON.parse(cleanedResponse);
           if (Array.isArray(parsed) && parsed.length > 0) {
             searchTerms = parsed;
+            console.log('Successfully parsed search terms:', searchTerms);
+          } else {
+            console.log('Parsed response is not a valid array:', parsed);
           }
         } catch (parseError) {
-          console.log('Failed to parse LLM response, using fallback');
+          console.error('Failed to parse LLM response:', {
+            error: parseError instanceof Error ? parseError.message : String(parseError),
+            rawResponse: responseText.substring(0, 200) + '...',
+            cleanedAttempt: responseText.trim().substring(0, 200) + '...'
+          });
         }
+      } else {
+        console.log('No response text received from LLM');
       }
     }
 
@@ -103,8 +128,46 @@ Return only the JSON array, no explanatory text.`;
 
   } catch (error) {
     console.error('Query analysis failed:', error);
-    return [query]; // Fallback to original query
+    return generateFallbackSearchTerms(query, jurisdiction);
   }
+}
+
+function generateFallbackSearchTerms(query: string, jurisdiction?: string): string[] {
+  const queryLower = query.toLowerCase();
+  const searchTerms = [];
+  
+  // Add original query
+  searchTerms.push(query);
+  
+  // Landlord-tenant specific terms
+  if (queryLower.includes('deposit') || queryLower.includes('landlord') || queryLower.includes('tenant')) {
+    if (jurisdiction === 'ca' || queryLower.includes('california') || queryLower.includes('san francisco')) {
+      searchTerms.push('California Civil Code 1950.5');
+      searchTerms.push('security deposit 21 days California');
+    }
+    searchTerms.push('landlord tenant security deposit');
+    searchTerms.push('wrongful retention deposit');
+  }
+  
+  // Contract terms
+  if (queryLower.includes('contract') || queryLower.includes('agreement')) {
+    searchTerms.push('contract breach');
+    searchTerms.push('contract interpretation');
+  }
+  
+  // Employment terms
+  if (queryLower.includes('employment') || queryLower.includes('fired') || queryLower.includes('terminated')) {
+    searchTerms.push('employment discrimination');
+    searchTerms.push('wrongful termination');
+  }
+  
+  // Add jurisdiction-specific terms
+  if (jurisdiction) {
+    searchTerms.push(`${query} ${jurisdiction}`);
+  }
+  
+  console.log('Generated fallback search terms:', searchTerms.slice(0, 5));
+  return searchTerms.slice(0, 5); // Limit to 5 terms
 }
 
 function calculateRelevanceScore(case_: any, query: string, jurisdiction?: string): number {
