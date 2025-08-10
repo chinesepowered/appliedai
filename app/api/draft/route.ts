@@ -28,7 +28,7 @@ function convertMarkdownToHtml(text: string): string {
   
   // Convert numbered lists (1. item) to <ol><li>
   html = html.replace(/^(\d+)\.\s(.*)$/gm, '<li>$2</li>');
-  html = html.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
+  html = html.replace(/(<li>.*<\/li>)/g, '<ol>$1</ol>');
   
   // Convert bullet lists (- item or * item) to <ul><li>
   html = html.replace(/^[-*]\s(.*)$/gm, '<li>$1</li>');
