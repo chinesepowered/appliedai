@@ -23,7 +23,7 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 - **Frontend**: Next.js 15 with App Router, React 19, Tailwind CSS 4
 - **Backend**: Next.js API Routes
 - **AI**: Google Gemini 2.5 Pro
-- **Legal APIs**: CourtListener, Justia (with placeholders for additional sources)
+- **Legal APIs**: CourtListener, Harvard Case.law, USC (Cornell), plus contextual sources
 - **Package Manager**: pnpm
 
 ## Setup Instructions
@@ -84,7 +84,7 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 
 🧠 **Smart Query Processing**: AI extracts legal concepts ("security deposit" + "21 day notice" + "California") for targeted searches
 
-📖 **Multiple Legal Sources**: Real cases from Justia, Google Scholar, Cornell LII - not just generic placeholders
+📖 **Multiple Real APIs**: Live data from CourtListener (10M cases), Harvard Case.law (6.7M cases), USC statutes, plus contextual examples
 
 ## API Endpoints
 

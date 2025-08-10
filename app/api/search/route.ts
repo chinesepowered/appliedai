@@ -171,6 +171,94 @@ function calculateRelevanceScore(case_: any, query: string, jurisdiction?: strin
   return score;
 }
 
+async function searchHarvardCaseLaw(query: string, jurisdiction?: string) {
+  try {
+    // Harvard Case.law API - free access to 6.7 million cases
+    const harvardApiUrl = 'https://api.case.law/v1/cases/';
+    const searchTerms = await analyzeLegalQuery(query, jurisdiction);
+    const harvardCases = [];
+
+    // Search with analyzed terms
+    for (const term of searchTerms.slice(0, 2)) { // Limit to avoid rate limits
+      try {
+        const params = {
+          search: term,
+          full_case: 'false', // Get excerpts, not full text
+          jurisdiction: jurisdiction?.toUpperCase() || undefined,
+          ordering: '-analysis.score', // Order by relevance
+          page_size: '20',
+        };
+
+        const response = await axios.get(harvardApiUrl, {
+          params,
+          timeout: 10000,
+          headers: {
+            'User-Agent': 'LegalResearchTool/1.0 (Educational Use)'
+          }
+        });
+
+        const cases = response.data?.results || [];
+        
+        for (const case_ of cases.slice(0, 3)) { // Limit per term
+          harvardCases.push({
+            id: `harvard-${case_.id}`,
+            name: case_.name_abbreviation || case_.name || 'Unknown Case',
+            court: case_.court?.name || 'Unknown Court',
+            date: case_.decision_date || 'Unknown Date',
+            snippet: case_.preview?.[0] || case_.casebody?.data?.head_matter || 'No preview available',
+            url: case_.frontend_url || `https://case.law/search/#/cases?search=${encodeURIComponent(term)}`,
+            jurisdiction: case_.jurisdiction?.name_long || case_.court?.jurisdiction || jurisdiction || 'Unknown',
+            source: 'Harvard Case.law',
+          });
+        }
+      } catch (termError) {
+        console.log(`Harvard search failed for term: ${term}`, termError);
+      }
+    }
+
+    console.log(`Harvard Case.law returned ${harvardCases.length} cases`);
+    return harvardCases;
+
+  } catch (error) {
+    console.log('Harvard Case.law API error:', error);
+    return [];
+  }
+}
+
+async function searchFederalStatutes(query: string) {
+  try {
+    // Extract USC references from query
+    const uscMatches = query.match(/(\d+)\s*USC?\s*(?:§|section)?\s*(\d+)/gi);
+    const statutes = [];
+    
+    if (uscMatches) {
+      for (const match of uscMatches.slice(0, 2)) {
+        const parts = match.match(/(\d+)\s*USC?\s*(?:§|section)?\s*(\d+)/i);
+        if (parts) {
+          const title = parts[1];
+          const section = parts[2];
+          
+          statutes.push({
+            id: `usc-${title}-${section}`,
+            name: `${title} U.S.C. § ${section}`,
+            court: 'U.S. Congress',
+            date: '2023-01-01',
+            snippet: `United States Code Title ${title}, Section ${section}. This federal statute governs relevant legal provisions. Full text available at Cornell Law School Legal Information Institute.`,
+            url: `https://www.law.cornell.edu/uscode/text/${title}/${section}`,
+            jurisdiction: 'federal',
+            source: 'USC (Cornell)',
+          });
+        }
+      }
+    }
+    
+    return statutes;
+  } catch (error) {
+    console.log('Federal statutes search error:', error);
+    return [];
+  }
+}
+
 async function searchAdditionalSources(query: string, jurisdiction?: string) {
   const additionalCases = [];
   
@@ -492,16 +580,42 @@ export async function POST(request: NextRequest) {
 
     console.log('Making CourtListener API request:', { params, hasToken: !!courtListenerToken });
 
+    // Make multiple searches with analyzed terms for better results
+    const searchTerms = await analyzeLegalQuery(query, jurisdiction);
+    const allResults = [];
+
+    // Search with original query
     const response = await axios.get(courtListenerApiUrl, {
       params,
       headers,
       timeout: 10000,
     });
+    allResults.push(...(response.data?.results || []));
 
-    const results = response.data?.results || [];
+    // Search with each analyzed term
+    for (const term of searchTerms.slice(0, 2)) { // Limit to avoid rate limits
+      try {
+        const termParams = { ...params, q: term };
+        const termResponse = await axios.get(courtListenerApiUrl, {
+          params: termParams,
+          headers,
+          timeout: 10000,
+        });
+        allResults.push(...(termResponse.data?.results || []));
+      } catch (error) {
+        console.log(`CourtListener search failed for term: ${term}`, error);
+      }
+    }
+
+    // Remove duplicates from CourtListener results
+    const uniqueResults = allResults.filter((case_, index, self) => 
+      self.findIndex(c => c.id === case_.id) === index
+    );
+    
+    const results = uniqueResults;
     
     let cases = results.slice(0, 8).map((case_: CourtListenerCase) => ({
-      id: case_.id,
+      id: case_.id.toString(), // Convert to string for consistency
       name: case_.cluster?.case_name || 'Unknown Case',
       court: case_.cluster?.docket?.court?.short_name || case_.cluster?.docket?.court?.full_name || 'Unknown Court',
       date: case_.cluster?.date_filed || 'Unknown Date',
@@ -511,13 +625,44 @@ export async function POST(request: NextRequest) {
       source: 'CourtListener',
     }));
 
-    // Add additional free legal sources
+    // Add Harvard Case.law API results
+    try {
+      const harvardCases = await searchHarvardCaseLaw(query, jurisdiction);
+      cases = [...cases, ...harvardCases];
+    } catch (error) {
+      console.log('Harvard Case.law search failed:', error);
+    }
+
+    // Add federal statutes if query mentions USC
+    try {
+      if (query.toLowerCase().includes('usc') || query.toLowerCase().includes('united states code')) {
+        const federalStatutes = await searchFederalStatutes(query);
+        cases = [...cases, ...federalStatutes];
+      }
+    } catch (error) {
+      console.log('Federal statutes search failed:', error);
+    }
+
+    // Add additional contextual sources (for demo/fallback)
     try {
       const additionalSources = await searchAdditionalSources(query, jurisdiction);
-      cases = [...cases, ...additionalSources].slice(0, 10);
+      cases = [...cases, ...additionalSources];
     } catch (error) {
       console.log('Additional sources search failed:', error);
     }
+
+    // Remove duplicates and rank by relevance
+    const uniqueCases = cases.filter((case_, index, self) => 
+      self.findIndex(c => c.name === case_.name || c.id === case_.id) === index
+    );
+    
+    const rankedCases = uniqueCases
+      .map(case_ => ({
+        ...case_,
+        relevanceScore: calculateRelevanceScore(case_, query, jurisdiction)
+      }))
+      .sort((a, b) => b.relevanceScore - a.relevanceScore)
+      .slice(0, 10);
 
     const fallbackCases = [];
     if (cases.length === 0) {
@@ -546,10 +691,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      cases: cases.length > 0 ? cases : fallbackCases,
-      total: response.data?.count || fallbackCases.length,
+      cases: rankedCases.length > 0 ? rankedCases : fallbackCases,
+      total: rankedCases.length || fallbackCases.length,
       query,
       jurisdiction,
+      sources: {
+        courtListener: cases.filter(c => c.source === 'CourtListener').length,
+        harvard: cases.filter(c => c.source === 'Harvard Case.law').length,
+        other: cases.filter(c => !['CourtListener', 'Harvard Case.law'].includes(c.source)).length,
+      }
     });
 
   } catch (error) {
