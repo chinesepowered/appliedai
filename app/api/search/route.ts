@@ -76,7 +76,7 @@ Example for tenant deposit issue:
 Return only the JSON array, no explanatory text.`;
 
     const result = await genAI.models.generateContent({
-      model: 'gemini-2.5-pro',
+      model: 'gemini-2.5-flash-lite',
       contents: analysisPrompt,
     });
 
