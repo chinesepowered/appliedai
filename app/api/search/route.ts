@@ -48,21 +48,32 @@ async function analyzeLegalQuery(query: string, jurisdiction?: string): Promise<
       apiKey: apiKey,
     });
 
-    const analysisPrompt = `You are a legal research expert. Analyze this legal query and extract the key legal concepts, statutes, and case law topics that should be searched.
+    const analysisPrompt = `You are an expert legal researcher. Analyze this legal query to extract precise legal concepts for targeted case law research.
 
 LEGAL QUERY: "${query}"
 JURISDICTION: ${jurisdiction || 'general'}
 
-Please provide 3-5 specific search terms that would find the most relevant case law and statutes. Focus on:
-1. The specific area of law (e.g., "landlord tenant law", "security deposit", "rental deposit return")
-2. Relevant statutes or regulations (e.g., "California Civil Code 1950.5")  
-3. Key legal concepts (e.g., "wrongful retention of deposit", "notice requirements")
-4. Procedural requirements (e.g., "21 day notice", "itemized deduction")
+Extract and analyze:
+1. PRIMARY LEGAL AREA: What area of law is this? (landlord-tenant, contract, tort, employment, IP, criminal, etc.)
+2. SPECIFIC STATUTES: What statutes likely apply? Include section numbers if mentioned
+3. KEY LEGAL CONCEPTS: What legal principles are at issue?
+4. PROCEDURAL ELEMENTS: What procedural requirements or timeframes are relevant?
+5. FACT PATTERN KEYWORDS: What factual elements are legally significant?
+6. JURISDICTION-SPECIFIC LAWS: What local/state laws likely apply?
 
-Format your response as a JSON array of search terms, like:
-["landlord tenant security deposit", "California Civil Code 1950.5", "wrongful retention deposit damages", "21 day notice requirement", "rental deposit return San Francisco"]
+Generate 5-7 targeted search terms that would find the most relevant precedents. Prioritize:
+- Specific statutory citations over general concepts
+- Jurisdiction-specific terms when applicable  
+- Procedural requirements with specific timeframes
+- Fact patterns that match the query precisely
 
-Return only the JSON array, no other text.`;
+Format as JSON array of search terms, ordered by relevance:
+["most specific statutory term", "procedural requirement", "fact pattern match", "legal concept", "broader area of law"]
+
+Example for tenant deposit issue:
+["California Civil Code 1950.5", "security deposit 21 days notice", "landlord failure return deposit California", "wrongful retention security deposit damages", "tenant rights California"]
+
+Return only the JSON array, no explanatory text.`;
 
     const result = await genAI.models.generateContent({
       model: 'gemini-2.5-pro',
@@ -94,6 +105,70 @@ Return only the JSON array, no other text.`;
     console.error('Query analysis failed:', error);
     return [query]; // Fallback to original query
   }
+}
+
+function calculateRelevanceScore(case_: any, query: string, jurisdiction?: string): number {
+  let score = 0;
+  const queryLower = query.toLowerCase();
+  const caseName = case_.name?.toLowerCase() || '';
+  const caseSnippet = case_.snippet?.toLowerCase() || '';
+  const caseText = `${caseName} ${caseSnippet}`;
+  
+  // Jurisdiction match bonus
+  if (jurisdiction && case_.jurisdiction === jurisdiction) {
+    score += 15;
+  }
+  
+  // Recency bonus (more recent cases get higher scores)
+  if (case_.date) {
+    const caseYear = parseInt(case_.date.split('-')[0]);
+    if (caseYear >= 2010) score += 10;
+    if (caseYear >= 2020) score += 5;
+  }
+  
+  // Source credibility bonus
+  if (case_.source === 'CourtListener') score += 10;
+  if (case_.source === 'Google Scholar') score += 8;
+  if (case_.source === 'Cornell LII') score += 6;
+  if (case_.source === 'Justia') score += 5;
+  
+  // Court level bonus (higher courts = more precedential value)
+  const courtName = case_.court?.toLowerCase() || '';
+  if (courtName.includes('supreme court')) score += 15;
+  if (courtName.includes('court of appeal')) score += 10;
+  if (courtName.includes('district court')) score += 5;
+  
+  // Keyword matching in case name (very important)
+  const keyTerms = ['deposit', 'landlord', 'tenant', 'security', 'notice', 'return', 
+                   'contract', 'breach', 'damages', 'negligence', 'employment', 
+                   'discrimination', 'civil code', '1950.5'];
+  
+  for (const term of keyTerms) {
+    if (queryLower.includes(term) && caseName.includes(term)) {
+      score += 20; // High bonus for matching key legal terms in case name
+    }
+    if (queryLower.includes(term) && caseSnippet.includes(term)) {
+      score += 10; // Medium bonus for matching in snippet
+    }
+  }
+  
+  // Specific statute matching (extremely high value)
+  if (queryLower.includes('1950.5') && caseText.includes('1950.5')) {
+    score += 50;
+  }
+  if (queryLower.includes('civil code') && caseText.includes('civil code')) {
+    score += 30;
+  }
+  
+  // Procedural term matching
+  if (queryLower.includes('21 day') && caseText.includes('21 day')) {
+    score += 25;
+  }
+  if (queryLower.includes('notice') && caseText.includes('notice')) {
+    score += 15;
+  }
+  
+  return score;
 }
 
 async function searchAdditionalSources(query: string, jurisdiction?: string) {
@@ -129,12 +204,21 @@ async function searchAdditionalSources(query: string, jurisdiction?: string) {
     }
   }
   
-  // Remove duplicates and limit results
+  // Remove duplicates and score for relevance
   const uniqueCases = additionalCases.filter((case_, index, self) => 
     self.findIndex(c => c.name === case_.name) === index
   );
   
-  return uniqueCases.slice(0, 6); // Return top 6 most relevant
+  // Score cases for relevance
+  const scoredCases = uniqueCases.map(case_ => ({
+    ...case_,
+    relevanceScore: calculateRelevanceScore(case_, query, jurisdiction)
+  }));
+  
+  // Sort by relevance score and return top results
+  return scoredCases
+    .sort((a, b) => b.relevanceScore - a.relevanceScore)
+    .slice(0, 6);
 }
 
 async function searchJustia(query: string, jurisdiction?: string) {
