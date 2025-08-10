@@ -1,6 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenAI } from '@google/genai';
 
+// Convert basic markdown formatting to HTML for proper display
+function convertMarkdownToHtml(text: string): string {
+  if (!text) return text;
+  
+  let html = text;
+  
+  // Convert **bold** to <strong>bold</strong>
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Convert *italic* to <em>italic</em>
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Convert ### headings to <h3>
+  html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+  
+  // Convert ## headings to <h2>
+  html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+  
+  // Convert # headings to <h1>
+  html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+  
+  // Convert line breaks to <br> for better formatting
+  html = html.replace(/\n\n/g, '<br><br>');
+  html = html.replace(/\n/g, '<br>');
+  
+  // Convert numbered lists (1. item) to <ol><li>
+  html = html.replace(/^(\d+)\.\s(.*)$/gm, '<li>$2</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ol>$1</ol>');
+  
+  // Convert bullet lists (- item or * item) to <ul><li>
+  html = html.replace(/^[-*]\s(.*)$/gm, '<li>$1</li>');
+  
+  return html;
+}
+
 interface DraftRequest {
   query: string;
   cases: Array<{
@@ -87,7 +122,7 @@ Please draft a structured legal argument that:
 
 Include the full case names, courts, dates, and specific legal holdings in your analysis. Reference the exact legal principles established by each case and how they apply to the current issue.
 
-Format your response as a professional legal memorandum with proper headings and complete citations.
+Format your response as a professional legal memorandum with proper headings and complete citations. Use markdown formatting for headings (**HEADING**) and emphasis (*italic* for notes, **bold** for important terms).
 
 MANDATORY DISCLAIMERS TO INCLUDE:
 - This is an AI-generated draft argument for research purposes only
@@ -96,16 +131,16 @@ MANDATORY DISCLAIMERS TO INCLUDE:
 - Practitioners must consult with qualified legal counsel and conduct independent research before relying on this analysis
 - All case law should be shepardized/validated for current good law
 
-Structure your response with these sections:
-I. ISSUE PRESENTED
-II. BRIEF ANSWER  
-III. STATEMENT OF FACTS (if applicable)
-IV. LEGAL ANALYSIS
-   A. Applicable Legal Standard
-   B. Analysis of Controlling Authority
-   C. Analysis of Persuasive Authority
-   D. Application to Present Issue
-V. CONCLUSION
+Structure your response with these sections using markdown formatting:
+**I. ISSUE PRESENTED**
+**II. BRIEF ANSWER**  
+**III. STATEMENT OF FACTS** (if applicable)
+**IV. LEGAL ANALYSIS**
+   **A. Applicable Legal Standard**
+   **B. Analysis of Controlling Authority**
+   **C. Analysis of Persuasive Authority**
+   **D. Application to Present Issue**
+**V. CONCLUSION**
 
 Ensure all case citations include complete court information, dates, and jurisdictions. Reference specific page numbers, holdings, and legal principles where available.`;
 
@@ -124,8 +159,11 @@ Ensure all case citations include complete court information, dates, and jurisdi
                 JSON.stringify(result);
     }
 
+    // Convert markdown formatting to HTML for proper display
+    const formattedArgument = convertMarkdownToHtml(argument);
+
     return NextResponse.json({
-      argument,
+      argument: formattedArgument,
       query,
       casesUsed: cases.length,
       generatedAt: new Date().toISOString(),
@@ -140,7 +178,7 @@ Ensure all case citations include complete court information, dates, and jurisdi
     );
 
     return NextResponse.json({
-      argument: fallbackArgument,
+      argument: convertMarkdownToHtml(fallbackArgument),
       error: 'AI service temporarily unavailable - showing template argument',
       generatedAt: new Date().toISOString(),
     });
@@ -152,45 +190,45 @@ function generateFallbackArgument(query: string, cases: any[]): string {
     `${index + 1}. ${case_.name} (${case_.court}, ${case_.date})`
   ).join('\n');
 
-  return `LEGAL RESEARCH MEMORANDUM
+  return `**LEGAL RESEARCH MEMORANDUM**
 
-I. ISSUE PRESENTED
+**I. ISSUE PRESENTED**
 
 ${query}
 
-II. BRIEF ANSWER
+**II. BRIEF ANSWER**
 
-[AI service temporarily unavailable - this is a template showing the structure of a legal argument]
+*[AI service temporarily unavailable - this is a template showing the structure of a legal argument]*
 
-III. ANALYSIS
+**III. ANALYSIS**
 
 Based on the relevant case law identified through legal research, the following precedents are applicable:
 
-RELEVANT PRECEDENTS:
+**RELEVANT PRECEDENTS:**
 ${caseList || 'Cases would be listed here'}
 
-[Detailed analysis of how each precedent applies to the current legal question would appear here, including:]
+*[Detailed analysis of how each precedent applies to the current legal question would appear here, including:]*
 
-A. Primary Authority Analysis
+**A. Primary Authority Analysis**
 - Supreme Court and circuit court decisions
 - State court precedents where applicable
 - Statutory interpretation and regulatory guidance
 
-B. Factual Comparison
+**B. Factual Comparison**
 - How the facts of precedent cases compare to the current situation
 - Distinguishing factors and similarities
 - Jurisdictional considerations
 
-C. Legal Reasoning
+**C. Legal Reasoning**
 - Application of established legal principles
 - Policy considerations and public interest factors
 - Potential counterarguments and rebuttals
 
-IV. CONCLUSION
+**IV. CONCLUSION**
 
-[Reasoned conclusion based on case law analysis would appear here]
+*[Reasoned conclusion based on case law analysis would appear here]*
 
-IMPORTANT DISCLAIMER:
+**IMPORTANT DISCLAIMER:**
 This is a template legal argument structure. For a complete analysis:
 1. Configure the Gemini AI API key in your environment variables
 2. This template is for demonstration purposes only
@@ -198,6 +236,6 @@ This is a template legal argument structure. For a complete analysis:
 4. Consult qualified legal counsel before relying on any legal analysis
 5. This is not legal advice and should not be used as such
 
-Generated on: ${new Date().toLocaleDateString()}
-Sources: Legal research database query results`;
+**Generated on:** ${new Date().toLocaleDateString()}
+**Sources:** Legal research database query results`;
 }
