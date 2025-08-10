@@ -8,7 +8,7 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 - ⚖️ **Jurisdiction-Specific Results**: Filter by courts with contextually relevant cases (CA Civil Code for SF tenant issues, etc.)  
 - 🤖 **Advanced AI Analysis**: Google Gemini 2.5 Pro with enhanced legal context processing
 - 🔗 **Automatic Citation Linking**: Legal references (Civil Code § 1950.5, USC sections) auto-link to official sources
-- 📚 **Multi-Source Integration**: CourtListener, Justia, Google Scholar, Cornell LII with real case law
+- 📚 **Multi-Source Integration**: CourtListener, Harvard Case.law, USC statutes, plus state legal resources
 - 📱 **Professional Interface**: Clean, accessible design with proper text contrast and usability
 
 ## Benefits
@@ -23,7 +23,7 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 - **Frontend**: Next.js 15 with App Router, React 19, Tailwind CSS 4
 - **Backend**: Next.js API Routes
 - **AI**: Google Gemini 2.5 Pro
-- **Legal APIs**: CourtListener, Harvard Case.law, USC (Cornell), plus contextual sources
+- **Legal APIs**: CourtListener, Harvard Case.law, USC (Cornell), State Legal Resources
 - **Package Manager**: pnpm
 
 ## Setup Instructions
@@ -84,7 +84,7 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 
 🧠 **Smart Query Processing**: AI extracts legal concepts ("security deposit" + "21 day notice" + "California") for targeted searches
 
-📖 **Multiple Real APIs**: Live data from CourtListener (10M cases), Harvard Case.law (6.7M cases), USC statutes, plus contextual examples
+📖 **Enhanced Multi-Source Coverage**: Live data from CourtListener (10M cases), Harvard Case.law (6.7M cases), USC statutes, plus direct state legal resource links
 
 ## API Endpoints
 
