@@ -215,3 +215,5 @@ python modal_research.py
 5. **Explore Sources**: Click any case for full citation details and court links
 
 The system uses **multi-agent orchestration** where different AI models research from opposing perspectives, ensuring comprehensive case analysis that lawyers can trust for real practice.
+
+
