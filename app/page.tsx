@@ -1,5 +1,6 @@
 'use client';
 
+import { span } from 'framer-motion/client';
 import { useState } from 'react';
 
 export default function Home() {
@@ -136,7 +137,24 @@ export default function Home() {
           <p className="text-lg text-gray-600">
             Find relevant case law and precedents with AI-powered analysis
           </p>
+          
+          {/* Navigation to Opposing Counsel Mode */}
+          <div className="mt-6">
+            <a
+              href="/opposingcounsel"
+              className="inline-flex items-center gap-2 bg-purple-600 text-white py-2 px-6 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 font-medium transition-colors"
+            >
+              ⚖️ Try Opposing Counsel Mode
+              <span className="text-xs bg-purple-500 px-2 py-1 rounded-full">NEW</span>
+            </a>
+            <p className="text-sm text-gray-500 mt-2">
+              Built-in devil's advocate that finds counter-arguments to strengthen your case
+            </p>
+          </div>
         </header>
+
+
+
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
           {/* Search Panel */}

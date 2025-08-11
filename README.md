@@ -10,6 +10,43 @@ An AI-powered legal research tool that finds relevant case law and precedents, t
 - 🔗 **Automatic Citation Linking**: Legal references (Civil Code § 1950.5, USC sections) auto-link to official sources
 - 📚 **Multi-Source Integration**: CourtListener, Harvard Case.law, USC statutes, plus state legal resources
 - 📱 **Professional Interface**: Clean, accessible design with proper text contrast and usability
+- ⚔️ **Opposing Counsel Mode**: Multi-agent adversarial system for comprehensive legal analysis
+
+## Opposing Counsel Mode
+
+The Opposing Counsel feature implements a multi-agent adversarial system that strengthens legal arguments by automatically finding counter-arguments and weaknesses. This mode operates through three phases:
+
+**Primary Argument Generation**: The system researches supporting case law and builds the strongest possible argument for your position using relevant precedents and legal principles.
+
+**Opposition Analysis**: A separate AI agent assumes the role of opposing counsel, searching for contrary authority, distinguishing cases, and identifying factual or legal gaps that could undermine the primary argument.
+
+**Counter-Rebuttal Synthesis**: The system generates responses to opposition points, distinguishes contrary cases, and reinforces the original argument with additional authority.
+
+### Modal Infrastructure Usage
+
+This application demonstrates several key Modal platform capabilities:
+
+**Modal Components Utilized**:
+- `modal.App`: Main deployment unit coordinating all serverless functions
+- `modal.Image.debian_slim()`: Custom container images with legal research dependencies (google-generativeai, requests, fastapi)
+- `modal.Secret.from_name()`: Secure environment variable management for API keys (Gemini, CourtListener)
+- `@modal.function()`: Serverless function decorator with automatic scaling and timeout management
+- `@modal.fastapi_endpoint()`: HTTP endpoint creation with built-in CORS and request handling
+- `function.remote()`: Parallel function invocation for concurrent legal research tasks
+
+**Parallel Processing Architecture**:
+When building a research tree, Modal functions execute simultaneously across multiple containers: one searches for primary supporting cases, another finds opposing authority, and a third generates counter-arguments. This parallel execution reduces research time from sequential minutes to concurrent seconds.
+
+**Modal Functions Deployed**:
+- `search_primary_cases`: Queries CourtListener API for supporting precedents
+- `search_opposing_cases`: Finds contrary authority and distinguishing cases  
+- `generate_argument`: Uses Gemini 2.5 Flash for legal reasoning and IRAC analysis
+- `recursive_research_node`: Orchestrates multi-level argument development
+- `research_endpoint`: FastAPI web interface for Next.js integration
+
+**Deployment**: Functions are deployed to Modal's cloud using `modal deploy` and accessible via HTTPS endpoints with automatic SSL, load balancing, and geographic distribution.
+
+The result is a comprehensive legal analysis that anticipates opposition arguments and provides attorneys with both offensive and defensive strategies, backed by real case law and structured legal reasoning.
 
 ## Benefits
 
@@ -146,3 +183,35 @@ MIT License - Built for educational and hackathon purposes.
 ---
 
 **Built with ❤️ for the legal community to accelerate research and improve access to justice.**
+
+## 🌳 **Modal-Powered Research Tree**
+
+The opposing counsel mode now features a **recursive research tree** powered by Modal's serverless infrastructure for parallel legal research at scale.
+
+### Key Features:
+- **🔍 Deep Research**: Recursively explores argument → opposition → counter-rebuttal chains
+- **⚡ Parallel Processing**: Modal functions run simultaneously across multiple legal databases
+- **📊 Real-time Metrics**: Live case analysis counts, processing times, and confidence scores
+- **🎯 Clickable Citations**: Expandable case details with direct links to full opinions
+- **💪 Case Strength Scoring**: Algorithmic assessment of argument strength (0-100)
+
+### Modal Integration:
+```bash
+# Setup Modal secrets and deploy research functions
+python modal_setup.py
+
+# Or manually:
+pip install modal
+modal setup
+export GOOGLE_GEMINI_API_KEY=your_key_here
+python modal_research.py
+```
+
+### Research Tree Demo Flow:
+1. **Enter Query**: "Landlord security deposit dispute"
+2. **Build Tree**: Triggers parallel Modal functions for primary research
+3. **Expand Opposition**: Click to find contrary authority and counter-arguments  
+4. **Strengthen Position**: Generate rebuttals that address opposition points
+5. **Explore Sources**: Click any case for full citation details and court links
+
+The system uses **multi-agent orchestration** where different AI models research from opposing perspectives, ensuring comprehensive case analysis that lawyers can trust for real practice.
