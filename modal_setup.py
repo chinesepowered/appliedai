@@ -15,7 +15,7 @@ def setup_modal_secrets():
     
     # Check if we have the required environment variables
     gemini_key = os.environ.get('GEMINI_API_KEY')
-    courtlistener_token = os.environ.get('COURTLISTENER_TOKEN', '')
+    courtlistener_token = os.environ.get('COURTLISTENER_TOKEN', '8e1731ae9f3cf38a6808c72779ec727c238ab707')
     
     if not gemini_key:
         print("❌ GEMINI_API_KEY not found in environment")

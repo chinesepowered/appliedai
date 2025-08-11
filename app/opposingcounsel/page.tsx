@@ -132,6 +132,11 @@ These allegations, taken as true, establish a plausible claim for discrimination
     setIsBuilding(true);
     setBuildingNodeId('root');
     
+    // Clear legacy state to avoid duplication
+    setOriginalArgument('');
+    setAnalysis(null);
+    setSupportingCases([]);
+    
     try {
       const response = await fetch('/api/modal-research', {
         method: 'POST',
@@ -158,10 +163,6 @@ These allegations, taken as true, establish a plausible claim for discrimination
         
         setResearchTree(newTree);
         setExpandedNodes(new Set(['root']));
-        
-        // Update legacy state for compatibility
-        setOriginalArgument(data.research_node.primary_argument.text);
-        setSupportingCases(data.research_node.primary_argument.supporting_cases);
       }
     } catch (error) {
       console.error('Research tree building failed:', error);
@@ -217,6 +218,10 @@ These allegations, taken as true, establish a plausible claim for discrimination
     setCurrentMode('build');
     setIsAnalyzing(true);
     
+    // Clear research tree to avoid duplication
+    setResearchTree(null);
+    setExpandedNodes(new Set());
+    
     try {
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('API timeout')), 10000)
@@ -255,6 +260,10 @@ These allegations, taken as true, establish a plausible claim for discrimination
     
     setCurrentMode('oppose');
     setIsAnalyzing(true);
+    
+    // Clear research tree to avoid duplication
+    setResearchTree(null);
+    setExpandedNodes(new Set());
     
     try {
       // Set a timeout for the API call
@@ -336,6 +345,10 @@ These allegations, taken as true, establish a plausible claim for discrimination
     
     setCurrentMode('counter');
     setIsAnalyzing(true);
+    
+    // Clear research tree to avoid duplication
+    setResearchTree(null);
+    setExpandedNodes(new Set());
     
     try {
       const response = await fetch('/api/opposingcounsel', {
@@ -755,11 +768,11 @@ These allegations, taken as true, establish a plausible claim for discrimination
                     </Badge>
                   </CardTitle>
                   <div className="flex items-center gap-4 text-sm text-emerald-700">
-                    <span>⚡ {researchTree.processing_stats.processing_time}</span>
-                    <span>🔧 {researchTree.processing_stats.modal_functions_executed} Modal Functions</span>
-                    <span>💪 Case Strength: {researchTree.root.case_strength_score}/100</span>
+                    <span>{researchTree.processing_stats.processing_time}</span>
+                    <span>{researchTree.processing_stats.modal_functions_executed} Modal Functions</span>
+                    <span>Case Strength: {researchTree.root.case_strength_score}/100</span>
                     <Badge variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
-                      🚀 Modal Powered
+                      Modal Powered
                     </Badge>
                   </div>
                 </CardHeader>
@@ -772,18 +785,9 @@ These allegations, taken as true, establish a plausible claim for discrimination
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
                             <h4 className="font-semibold text-slate-900">Primary Argument</h4>
-                            <div className="w-16 h-12 rounded overflow-hidden">
-                              <div 
-                                className="tenor-gif-embed" 
-                                data-postid="6625195720948963721" 
-                                data-share-method="host" 
-                                data-aspect-ratio="1.49102" 
-                                data-width="100%"
-                                style={{width: '64px', height: '48px'}}
-                              >
-                                <a href="https://tenor.com/view/phoenix-wright-ace-attorney-phoenix-wright-read-reading-ace-attorney-phoenix-wright-gif-6625195720948963721">Phoenix Wright</a>
-                              </div>
-                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              Phoenix Wright
+                            </Badge>
                           </div>
                           <div className="text-sm text-slate-700 leading-relaxed mb-3 prose prose-sm max-w-none">
                             <div dangerouslySetInnerHTML={{
@@ -909,18 +913,9 @@ These allegations, taken as true, establish a plausible claim for discrimination
                                 <div className="flex-1">
                                   <div className="flex items-center gap-3 mb-1">
                                     <h5 className="font-medium text-red-900 text-sm">Opposition Analysis</h5>
-                                    <div className="w-12 h-8 rounded overflow-hidden">
-                                      <div 
-                                        className="tenor-gif-embed" 
-                                        data-postid="5363889720252618555" 
-                                        data-share-method="host" 
-                                        data-aspect-ratio="1.49102" 
-                                        data-width="100%"
-                                        style={{width: '48px', height: '32px'}}
-                                      >
-                                        <a href="https://tenor.com/view/edgeworth-ace-attorney-big-brain-gif-5363889720252618555">Edgeworth</a>
-                                      </div>
-                                    </div>
+                                    <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-200">
+                                      Edgeworth
+                                    </Badge>
                                   </div>
                                   <p className="text-sm text-red-800 mb-3">
                                     {researchTree.root.opposition.text}
